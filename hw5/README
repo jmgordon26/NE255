@@ -1,0 +1,4 @@
+to run:
+  make ./
+  make 
+  ./hw5_answer.exe
