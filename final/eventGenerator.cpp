@@ -1,7 +1,7 @@
 // #include "dataTypes.h"
 // #include "randNum.h"
 #include "readXSec.h"
-
+#include "extraMath.h"
 
 #include<iostream>
 #include<iomanip>
@@ -39,6 +39,8 @@ int main(int argc, char *argv[])
   }
 
   ofstream ofs {outputFileName.c_str()};
+
+  extraMath eMath;
 
   randNum randNumGen;
   randNumGen.setSeed(RNGSeed);
@@ -108,6 +110,8 @@ int main(int argc, char *argv[])
   cout << "initializing RIPL data\n";
   RIPL riplData;
   riplData.readRIPL(.001);
+  cout << "Reading elastic angular distributions\n";
+  initData.readElasticAngle(isotope);
   int numCap=0;
   int numEl =0;
   int numInel =0;
@@ -118,7 +122,7 @@ int main(int argc, char *argv[])
   map<string, double> inelLevels;
   for (int iPart =0; iPart < numParticles; iPart++)
   {
-    if (iPart%10000==0) cout << "working on history " << iPart << "\n";
+    if (iPart%1000==0) cout << "working on history " << iPart << "\n";
     /// sample beam energy, location, direction
     // int hBin = (*upper_bound(beamFlux, beamFlux+62, randNumGen.next()));
     // double rand2 = randNumGen.next();
@@ -129,6 +133,7 @@ int main(int argc, char *argv[])
     double rand2 = randNumGen.next();
     if (hBin==1) beamEnergy = hLE + (hHE[0]-hLE)*rand2;
     else beamEnergy = hHE[hBin] + (hHE[hBin+1]-hHE[hBin])*rand2;
+    ofs << "{"<<beamEnergy<<",";
     // cout << "beamEnergy = " << beamEnergy<<"\n";
     string rxnType = initData.pickReaction(beamEnergy*1e6);
     /// determine reaction or lack thereof
@@ -141,6 +146,10 @@ int main(int argc, char *argv[])
     else if (rxnType=="el")
     {
       numEl++;
+      double mu_LAB = initData.pickElasticAngle(beamEnergy*1e6, randNumGen.next());
+      double new_energy = eMath.outgoingEnergy(beamEnergy,931,931*56,mu_LAB, 0);
+      ofs << "{n,"<<new_energy<<","<<mu_LAB<<"}";
+      // cout << beamEnergy << ": e_out = " << e_out << ", ang = " << mu_LAB << "\n";
     }
     else if (rxnType=="inel")
     {
@@ -151,16 +160,20 @@ int main(int argc, char *argv[])
       // cout << "riplLevel = " <<riplLevel << "\n";
       double energy = riplData.getLevelEnergy(riplLevel);
       // cout << "energy = " << energy << "\n";
-      double new_energy = beamEnergy-new_energy;
-      inelLevels[inelLevel_ensdf] = energy;
+      // double new_energy = pow(56./57,2)*(beamEnergy-energy*57./56);
+
 
       vector<double> gammas = riplData.doCascade(riplLevel, (&randNumGen));
-
-      for (double gamma : gammas)
+      double mu_LAB = initData.pickInelAngle(inelLevel_ensdf, beamEnergy*1e6, randNumGen.next());
+      double new_energy = eMath.outgoingEnergy(beamEnergy,931,931*56,mu_LAB, energy);
+      ofs << "{n,"<<new_energy<<","<<mu_LAB<<"},";
+      inelLevels[inelLevel_ensdf] = energy;
+      //for (double gamma : gammas)
+      for (int iG = 0; iG<gammas.size()-1; iG++)
       {
-        ofs <<"{g,"<< gamma <<"},";
+        ofs <<"{g,"<< gammas[iG] <<","<<2.*randNumGen.next()-1<<"},";
       }
-      ofs<<"\n";
+      ofs <<"{g,"<< gammas[gammas.size()-1] <<","<<2.*randNumGen.next()-1<<"}";
     }
     // else if (rxnType=="iso")
     else
@@ -169,6 +182,7 @@ int main(int argc, char *argv[])
       iso_counts[rxnType]+=1;
       // do decay
     }
+    ofs << "}\n";
   }
 
   cout << "numCaptures = " << numCap <<"\n";
