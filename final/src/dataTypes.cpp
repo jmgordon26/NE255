@@ -17,6 +17,20 @@
 #include<sstream>
 using namespace std;
 
+int binomialCoefficients(int l, int k) {
+   if (k == 0 || k == l)
+   return 1;
+   return binomialCoefficients(l - 1, k - 1) + binomialCoefficients(l - 1, k);
+}
+double legPoly(int l, double x)
+{
+  double pl = 0.;
+  for (int k=0;k<l+1;k++)
+  {
+    pl+=pow(binomialCoefficients(l,k),2)*pow(x-1,l-k)*pow(x+1,k);
+  }
+  return pl/pow(2,l);
+}
 uint16_t riplLevel::getDecayLevel(double a_randNum)
 {
   // for (double ee : m_branchRatio) cout << "Br = " << ee << ", ";
@@ -171,4 +185,37 @@ uint16_t RIPL::getLevelNumber(string a_level, randNum* a_randGen)
 double RIPL::getLevelEnergy(uint16_t a_level)
 {
   return m_data[a_level].getEnergy();
+}
+
+double angDistLeg::sample(double a_rand)
+{
+  vector<double> mu;
+  vector<double> prob;
+  double prob_tot=0.;
+  for (int p=0; p<200; p++)
+  {
+    mu.push_back(-1.+2.*p/200);
+    double pl =0.;
+    for (int l =0; l<m_coeffs.size(); l++)
+    {
+      pl += m_coeffs[l]*legPoly(l,-1.+2.*p/200);
+    }
+    pl+=1.;
+    prob_tot+=pl;
+    prob.push_back(pl);
+  }
+  double norm_prob_sum=0.;
+  for (int iP=0; iP<200; iP++)
+  {
+    double norm_prob = prob[iP]/prob_tot;
+    double prob_cur  = norm_prob+norm_prob_sum;
+    norm_prob_sum   += norm_prob;
+    if (a_rand<prob_cur) return mu[iP];
+  }
+}
+
+void angDistLeg::printData()
+{
+  for (double coeff: m_coeffs) cout << coeff << ", ";
+  cout << "\n";
 }

@@ -7,11 +7,13 @@ set(HEADERS
       ${PROJECT_SOURCE_DIR}/include/readXSec.h
       ${PROJECT_SOURCE_DIR}/include/randNum.h
       ${PROJECT_SOURCE_DIR}/include/dataTypes.h
+      ${PROJECT_SOURCE_DIR}/include/extraMath.h
     )
 
 set(SOURCES 
       ${PROJECT_SOURCE_DIR}/src/readXSec.cpp
       ${PROJECT_SOURCE_DIR}/src/dataTypes.cpp
+      ${PROJECT_SOURCE_DIR}/src/extraMath.cpp
     )
 include_directories(${PROJECT_SOURCE_DIR}/include 
                     )

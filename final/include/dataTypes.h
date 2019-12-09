@@ -13,16 +13,35 @@ public:
   std::vector<double> xsec;
 
 };
-/// class to hold angular distribution data
+/// classes to hold angular distribution data
 /// will have histogrammed and legendre data
 class angDist
 {
 public:
   angDist() {;}
-  std::vector<double> mu;
-  std::vector<double> prob;
-};
+  std::vector<double> m_coeffs;
+protected:
+  double sample(double a_rand);
 
+};
+class angDistLeg : public angDist
+{
+public:
+  angDistLeg() {;}
+  std::vector<double> m_coeffs;
+
+  double sample(double a_rand);
+  void printData();
+};
+class angDistHist : public angDist
+{
+public:
+  angDistHist() {;}
+  std::vector<double> m_mu;
+  std::vector<double> m_prob;
+
+  //double sample(double a_rand);
+};
 /// represents decay gammas from a given level
 class riplLevel
 {

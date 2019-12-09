@@ -28,10 +28,12 @@ public:
   void initPartialInel(string a_isotope);
   void initTotal(string a_isotope);
   void readCapture(string a_isotope);
-
+  void readElasticAngle(string a_isotope);
   string pickReaction(double a_energy);
 
   string pickInelLevel(double a_energy);
+  double pickInelAngle(string a_level, double a_incidentEnergy, double a_rand);
+  double pickElasticAngle(double a_incidentEnergy, double a_rand);
 
 private:
   randNum* m_rand;
@@ -41,5 +43,6 @@ private:
   map<int, vector<uint16_t>> m_partialInel;
   map<string, xSec> m_partialInelx;
   map<string, xSec> m_isotopeProd;
-
+  map<string, map<double,angDistLeg>> m_partialInelAng;
+  map<double, angDistLeg> m_elasticAng;
 };
