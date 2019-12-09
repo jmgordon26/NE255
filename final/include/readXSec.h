@@ -1,6 +1,8 @@
 // project includes
 // #include "randNum.h"
 #include "dataTypes.h"
+#include "extraMath.h"
+
 // c++ includes
 #include<iostream>
 #include<iomanip>
@@ -34,6 +36,7 @@ public:
   string pickInelLevel(double a_energy);
   double pickInelAngle(string a_level, double a_incidentEnergy, double a_rand);
   double pickElasticAngle(double a_incidentEnergy, double a_rand);
+  vector<double> readENSDF(string a_isotope, double a_rand);
 
 private:
   randNum* m_rand;

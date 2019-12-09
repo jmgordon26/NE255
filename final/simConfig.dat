@@ -1,12 +1,15 @@
 ## Simulation Configuration File
 ## Target information first
-#isotope 26_56_Iron
-#width 3 ##cm
-#thickness .5 ##mm
+#isotope 
+26_56_Iron
+#width of target
+3 ##cm
+#thickness of target
+.5 ##mm
 ## Beam Information
 ## energy-flux pairs [MeV,arb.]
 #flux
-/gps/hist/point 1.5 0.1
+#hist
 2.5311,0.08185176327
 3.507,0.0887613277
 4.5144,0.09620239709

@@ -1,6 +1,7 @@
 #include "extraMath.h"
 #include <stdio.h>
 #include <iostream>
+
 double extraMath::outgoingEnergy(double a_incEnergy, double a_mN, double a_mT, double a_labAngle, double a_extraE)
 // double extraMath::outgoingEnergy(double a_incEnergy,  double a_inMass, double a_tarMass, double a_labAngle)
 {
@@ -58,3 +59,24 @@ std::vector<double> extraMath::outgoingAngle(std::vector<double> a_initAngle, do
 {
   return {a_initAngle[0]+a_muLAB, a_initAngle[1], a_initAngle[2]};
 }
+std::vector<double> extraMath::fluxCDF(std::vector<double> a_fluxPDF)
+{
+  std::vector<double> fluxCDF;
+  double sum = 0.;
+  for (double flux : a_fluxPDF)
+  {
+    sum += flux;
+    fluxCDF.push_back(sum);
+  }
+  for (int i=0; i<fluxCDF.size(); i++) fluxCDF[i] /= sum;
+  return fluxCDF;
+}
+
+// std::vector<double> extraMath::initPosition(double a_rad, randNum* a_randGen)
+// {
+//   double r1 = a_rad*(2*a_randGen->next()-1);
+//   double r2 = a_rad*(2*a_randGen->next()-1);
+
+//   double radius = sqrt(r1*r1+r2*r2);
+//   while (radius > a_rad) r2 = a_rad*(2*a_randGen->next()-1);
+// }

@@ -1,7 +1,7 @@
 // #include "dataTypes.h"
 // #include "randNum.h"
 #include "readXSec.h"
-#include "extraMath.h"
+// #include "extraMath.h"
 
 #include<iostream>
 #include<iomanip>
@@ -15,6 +15,20 @@
 #include<algorithm>
 
 using namespace std;
+
+std::vector<double> initPosition(double a_rad, randNum* a_randGen)
+{
+  double r1 = a_rad*(2*a_randGen->next()-1);
+  double r2 = a_rad*(2*a_randGen->next()-1);
+
+  double radius = sqrt(r1*r1+r2*r2);
+  while (radius > a_rad)
+  {
+    r2 = a_rad*(2*a_randGen->next()-1);
+    radius = sqrt(r1*r1+r2*r2);
+  }
+  return {r1,r2};
+}
 
 int main(int argc, char *argv[])
 {
@@ -38,8 +52,6 @@ int main(int argc, char *argv[])
     }
   }
 
-  ofstream ofs {outputFileName.c_str()};
-
   extraMath eMath;
 
   randNum randNumGen;
@@ -48,56 +60,121 @@ int main(int argc, char *argv[])
   /// read in simConfig file:
   /// read in target data
   /// read in beam data
-  ifstream ifs("simConfig.dat");
+  ifstream ifs("../simConfig.dat");
   string line;
   getline(ifs, line);
   string isotope = "26_56_Iron";
-  string targetWidth;
-  string targetThickness;
+  double targetWidth;
+  double targetThickness;
   vector<double> beamEner;
   vector<double> beamFlux;
-  // while (line!="#end")
-  // {
-  //   if (line=="#isotope") isotope = line;
-  //   else if (line=="#width") targetWidth = line;
-  //   else if (line=="#thickness") targetThickness = line;
-  //   else if (line=="#flux")
-  //   {
-  //     getline(ifs,line);
-  //     while (line!="#endflux")
-  //     {
-  //       beamEner.push_back(stof(line.substr(0,line.find(","))));
-  //       beamFlux.push_back(stof(line.substr(line.find(",")+1)));
-  //       getline(ifs, line);
-  //     }
-  //   }
-  //   getline(ifs,line);
-  // }
+  while (line!="#end")
+  {
+    if (line.substr(0,8)=="#isotope") 
+    {
+      getline(ifs, line);
+      isotope = line;
+    }
+    else if (line.substr(0,6)=="#width") 
+    {
+      getline(ifs, line);
+      targetWidth = (double)stof(line);
+    }
+    else if (line.substr(0,10)=="#thickness") 
+    {
+      getline(ifs, line);
+      targetThickness = (double)stof(line);
+    }
+    else if (line.substr(0,5)=="#flux")
+    {
+      getline(ifs,line);
+      if (line=="#hist")
+      {
+        cout << "Reading custom flux\n";
+        getline(ifs,line);
+        while (line!="#endflux")
+        {
+          beamEner.push_back((double)stof(line.substr(0,line.find(","))));
+          beamFlux.push_back((double)stof(line.substr(line.find(",")+1)));
+          getline(ifs, line);
+        }      
+      }
+      else
+      {
+        if (line=="gauss")
+        {
+          cout << "Generating Gaussian flux\n";
+          getline(ifs,line);
+          double e_min = stof(line.substr(0,line.find(" ")));
+          double e_max = stof(line.substr(line.find(" ")+1));
+          getline(ifs,line);
+          double mean = stof(line.substr(0,line.find(" ")));
+          double std_dev = stof(line.substr(line.find(" ")+1));
+          for (int i=0;i<100;i++)
+          {
+            double ener = (e_max-e_min)/100*i;
+            beamEner.push_back(ener);
+            beamFlux.push_back(exp(-pow((mean-ener)/(sqrt(2.)*std_dev),2)));
+          }
+        }
+        else if (line=="uniform")
+        {
+          cout << "Generating Uniform flux\n";
+          getline(ifs,line);
+          double e_min = stof(line.substr(0,line.find(" ")));
+          double e_max = stof(line.substr(line.find(" ")+1));
+          getline(ifs,line);
+          for (int i=0;i<100;i++)
+          {
+            beamEner.push_back((e_max-e_min)/100*i);
+            beamFlux.push_back(1.);
+          }
+        }
+        else if (line=="expo")
+        {
+          cout << "Generating Exponential flux\n";
+          getline(ifs,line);
+          double e_min = stof(line.substr(0,line.find(" ")));
+          double e_max = stof(line.substr(line.find(" ")+1));
+          getline(ifs,line);
+          double decay_const = stof(line);
+          for (int i=0;i<100;i++)
+          {
+            double ener = (e_max-e_min)/100*i;
+            beamEner.push_back(ener);
+            beamFlux.push_back(exp(decay_const*ener));
+          }
+        }
+        else if (line=="watt")
+        {
+          cout << "Generating Watt Fission flux\n";
+          getline(ifs,line);
+          double e_min = stof(line.substr(0,line.find(" ")));
+          double e_max = stof(line.substr(line.find(" ")+1));
+          getline(ifs,line);
+          double a = stof(line.substr(0,line.find(" ")));
+          double b = stof(line.substr(line.find(" ")+1));
+          for (int i=0;i<100;i++)
+          {
+            double ener = (e_max-e_min)/100*i;
+            beamEner.push_back(ener);
+            beamFlux.push_back(exp(-a*ener)*.5*(exp(sqrt(b*ener))-exp(-sqrt(b*ener))));
+          }
+        }
+        else 
+        {
+          cout << "Invalid flux type. See document for correct input formatting";
+          return 0;
+        }
+      }
+    }
+    getline(ifs,line);
+  }
+  cout <<"width = "<< targetWidth << ", thickness = " <<targetThickness << "\n";
   /// convert energy-flux to CDF
-  vector<double> hHE = {1.046,  1.073,  1.101,  1.131,  1.16 ,  1.192,  1.225,  1.259,
-        1.295,  1.333,  1.371,  1.412,  1.455,  1.499,  1.546,  1.594,
-        1.646,  1.7  ,  1.756,  1.816,  1.877,  1.943,  2.012,  2.084,
-        2.161,  2.243,  2.328,  2.419,  2.515,  2.617,  2.726,  2.841,
-        2.963,  3.094,  3.235,  3.384,  3.544,  3.716,  3.9  ,  4.099,
-        4.313,  4.545,  4.796,  5.068,  5.365,  5.688,  6.042,  6.429,
-        6.855,  7.325,  7.845,  8.423,  9.068,  9.79 , 10.602, 11.521,
-       12.565, 13.759, 15.133, 16.726, 18.587, 20.781};
-  double hLE = 1.02;
-  vector<double> hP = {0.        , 0.00251036, 0.00427961, 0.00580133, 0.00769592,
-       0.01082054, 0.01298782, 0.01490305, 0.01740344, 0.02015121,
-       0.02279021, 0.02510506, 0.02743855, 0.03079164, 0.03382312,
-       0.03776453, 0.04166598, 0.0455366 , 0.04949852, 0.05373237,
-       0.05829342, 0.06276764, 0.06703562, 0.07052072, 0.07485722,
-       0.08022411, 0.08515162, 0.09093775, 0.09680106, 0.1038973 ,
-       0.11221593, 0.12047039, 0.12946396, 0.14089085, 0.1507597 ,
-       0.16332836, 0.17605697, 0.18821974, 0.20302229, 0.21768669,
-       0.23473363, 0.25438739, 0.27677956, 0.30068547, 0.32798623,
-       0.35678972, 0.3905468 , 0.42910989, 0.47566086, 0.5211588 ,
-       0.5684784 , 0.62145803, 0.67450177, 0.73019106, 0.78721138,
-       0.84650753, 0.89838763, 0.95017052, 0.98117838, 0.99365541,
-       0.99891237, 1.};
+  vector<double> fluxCDF = eMath.fluxCDF(beamFlux);
   /// initialize output file (separate class?)
-
+  ofstream ofs {outputFileName.c_str()};
   /// initialize data
   readXSec initData;
   cout << "initializing Capture Cross Sections\n";
@@ -110,6 +187,7 @@ int main(int argc, char *argv[])
   cout << "initializing RIPL data\n";
   RIPL riplData;
   riplData.readRIPL(.001);
+  for (int i=0;i<10;i++) randNumGen.next();
   cout << "Reading elastic angular distributions\n";
   initData.readElasticAngle(isotope);
   int numCap=0;
@@ -120,24 +198,25 @@ int main(int argc, char *argv[])
   /// begin main loop
   cout << "beginning main loop\n";
   map<string, double> inelLevels;
+  int per = numParticles/10;
   for (int iPart =0; iPart < numParticles; iPart++)
   {
-    if (iPart%1000==0) cout << "working on history " << iPart << "\n";
-    /// sample beam energy, location, direction
-    // int hBin = (*upper_bound(beamFlux, beamFlux+62, randNumGen.next()));
-    // double rand2 = randNumGen.next();
-    // if (hBin==1) energy = hLE + (beamEner[0]-hLE)*rand2;
-    // else energy = beamEner[hBin] + (beamEner[hBin+1]-beamEner[hBin])*rand2;
-    double beamEnergy =0.;
-    int hBin = distance(hP.begin(),std::upper_bound(hP.begin(), hP.end(), randNumGen.next()));
-    double rand2 = randNumGen.next();
-    if (hBin==1) beamEnergy = hLE + (hHE[0]-hLE)*rand2;
-    else beamEnergy = hHE[hBin] + (hHE[hBin+1]-hHE[hBin])*rand2;
-    ofs << "{"<<beamEnergy<<",";
-    // cout << "beamEnergy = " << beamEnergy<<"\n";
-    string rxnType = initData.pickReaction(beamEnergy*1e6);
-    /// determine reaction or lack thereof
+    if (iPart%per==0) cout << "working on history " << iPart << "\n";
 
+    // interaction location
+    vector<double> init_pos_xy = initPosition(targetWidth, (&randNumGen));
+    double init_pos_z = targetThickness*randNumGen.next();
+    double beamEnergy =0.;
+    int hBin = distance(fluxCDF.begin(),std::upper_bound(fluxCDF.begin(), fluxCDF.end(), randNumGen.next()));
+    double rand2 = randNumGen.next();
+    if (hBin==0) beamEnergy = beamEner[0]*rand2;
+    else beamEnergy = beamEner[hBin] + (beamEner[hBin+1]-beamEner[hBin])*rand2;
+    ofs << "["<<beamEnergy<<",";
+    ofs << "("<<init_pos_xy[0]<<","<<init_pos_xy[1]<<","<<init_pos_z<<"),";
+    // cout << "beamEnergy = " << beamEnergy<<"\n";
+    /// determine reaction or lack thereof
+    string rxnType = initData.pickReaction(beamEnergy*1e6);
+    /// sample initial position
     /// based on chosen reaction, generate output particles
     if (rxnType=="cap")
     {
@@ -160,8 +239,6 @@ int main(int argc, char *argv[])
       // cout << "riplLevel = " <<riplLevel << "\n";
       double energy = riplData.getLevelEnergy(riplLevel);
       // cout << "energy = " << energy << "\n";
-      // double new_energy = pow(56./57,2)*(beamEnergy-energy*57./56);
-
 
       vector<double> gammas = riplData.doCascade(riplLevel, (&randNumGen));
       double mu_LAB = initData.pickInelAngle(inelLevel_ensdf, beamEnergy*1e6, randNumGen.next());
@@ -175,14 +252,23 @@ int main(int argc, char *argv[])
       }
       ofs <<"{g,"<< gammas[gammas.size()-1] <<","<<2.*randNumGen.next()-1<<"}";
     }
-    // else if (rxnType=="iso")
     else
     {
       numIso++;
       iso_counts[rxnType]+=1;
       // do decay
+      vector<double> gammas = initData.readENSDF(rxnType, randNumGen.next());
+      if (gammas.size()>0)
+      {
+        for (int iG = 0; iG<gammas.size()-1; iG++)
+        {
+          // cout << "decay gamma = " << gammas[iG] << "\n";
+          ofs << "{g," << gammas[iG] << 2.*randNumGen.next()-1<<"},";
+        }
+        ofs << "{g," << gammas[gammas.size()-1] << 2.*randNumGen.next()-1<<"}";
+      }
     }
-    ofs << "}\n";
+    ofs << "]\n";
   }
 
   cout << "numCaptures = " << numCap <<"\n";

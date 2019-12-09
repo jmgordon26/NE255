@@ -144,7 +144,7 @@ void readXSec::initTotal(string a_isotope)
       }
       m_total[pair.first].energy = energy;
       m_total[pair.first].xsec = xsec;
-      cout << pair.first << ": " << m_total[pair.first].energy.size() <<"\n";
+      // cout << pair.first << ": " << m_total[pair.first].energy.size() <<"\n";
     }
     ifs.close();
   }
@@ -332,23 +332,103 @@ void readXSec::readElasticAngle(string a_isotope)
 double readXSec::pickElasticAngle(double a_incidentEnergy, double a_rand)
 {
   // cout << a_level << "\n";
-
-  auto iter = m_elasticAng.end();
-  iter = prev(iter,1);
-  double a_dist_cur = abs((*iter).first - a_incidentEnergy);
-  
-  double a_dist_prev = abs((*iter).first - a_incidentEnergy);
-  // cout << "BeamEnergy = " << a_incidentEnergy << ", " <<(*iter).first<< "\n";
-  while (a_dist_prev>=a_dist_cur)
+  if (a_incidentEnergy>1e6)
   {
-    a_dist_prev = a_dist_cur;
+    auto iter = m_elasticAng.end();
     iter = prev(iter,1);
-    a_dist_cur = abs((*iter).first - a_incidentEnergy);
-    // cout << (*iter).first << ", " << abs((*iter).first - a_incidentEnergy) << "\n";
-  }
-  iter = next(iter,1);
-  // cout << "found energy = " << (*iter).first << "\n";
-  double mu = (*iter).second.sample(a_rand);
-  return mu;    
+    double a_dist_cur = abs((*iter).first - a_incidentEnergy);
 
+    double a_dist_prev = abs((*iter).first - a_incidentEnergy);
+    // cout << "BeamEnergy = " << a_incidentEnergy << ", " <<(*iter).first<< "\n";
+    while (a_dist_prev>=a_dist_cur)
+    {
+      a_dist_prev = a_dist_cur;
+      iter = prev(iter,1);
+      a_dist_cur = abs((*iter).first - a_incidentEnergy);
+      // cout << (*iter).first << ", " << abs((*iter).first - a_incidentEnergy) << "\n";
+    }
+    iter = next(iter,1);
+    // cout << "found energy = " << (*iter).first << "\n";
+    double mu = (*iter).second.sample(a_rand);
+    return mu;    
+  }
+  else
+  {
+    auto iter = m_elasticAng.begin();
+    iter = next(iter,1);
+    double a_dist_cur = abs((*iter).first - a_incidentEnergy);
+
+    double a_dist_prev = abs((*iter).first - a_incidentEnergy);
+    // cout << "BeamEnergy = " << a_incidentEnergy << ", " <<(*iter).first<< "\n";
+    while (a_dist_prev>=a_dist_cur)
+    {
+      a_dist_prev = a_dist_cur;
+      iter = next(iter,1);
+      a_dist_cur = abs((*iter).first - a_incidentEnergy);
+      // cout << (*iter).first << ", " << abs((*iter).first - a_incidentEnergy) << "\n";
+    }
+    iter = prev(iter,1);
+    // cout << "found energy = " << (*iter).first << "\n";
+    double mu = (*iter).second.sample(a_rand);
+    return mu;      
+  }
+
+}
+vector<double> readXSec::readENSDF(string a_isotope, double a_rand)
+{
+
+  string fname = "../../FeXsec/ensdf_"+a_isotope.substr(0,a_isotope.find(" "))+".txt";
+  // cout << fname << "\n";
+  ifstream ifs {fname.c_str()};
+  if (!ifs) 
+  {
+    cout << fname<<"\n";
+    return {};
+  }
+  string line;
+  getline(ifs, line);
+  string daughterNuc = line.substr(1,6)+"G";
+  string daughterNucLvl = line.substr(1,6)+"L";
+  double tot = 0.;
+  vector<double> gammas_out;
+  vector<double> gammas;
+  vector<double> ratios;
+  
+  while (line.size()>1)
+  {
+    if (line.substr(1,7)==daughterNucLvl)
+    {
+      double level = stof(line.substr(9,10));
+      // cout <<"level = "<< level << "\n";
+    }
+    else if (line.substr(1,7)==daughterNuc)
+    {
+      double energy = stof(line.substr(9,10));
+      // cout << energy << "\n";
+      double br = stof(line.substr(21,5));
+
+      // cout << br << "\n";
+      // tot+=br;
+      if (br>=100) gammas_out.push_back(energy);
+      else 
+      {
+        tot+=br;
+        gammas.push_back(energy);
+        ratios.push_back(br);
+      }
+    }
+    getline(ifs,line);
+  }
+  // cout <<"total = "<< tot << "\n";
+  double tot_cum = 0.;
+  for (int iG =0; iG<gammas.size(); iG++)
+  {
+    double br = ratios[iG]/tot;
+
+    tot_cum+=br;
+    // cout << br << ", " <<tot_cum << ", " <<a_rand<<"\n";
+    if (tot_cum>a_rand) {gammas_out.push_back(gammas[iG]); break;}
+  }
+  // 
+  return gammas_out;
 }
