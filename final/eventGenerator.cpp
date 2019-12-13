@@ -13,7 +13,7 @@
 #include<vector>
 #include<map>
 #include<algorithm>
-
+#include <stdlib.h>
 using namespace std;
 
 std::vector<double> initPosition(double a_rad, randNum* a_randGen)
@@ -68,6 +68,7 @@ int main(int argc, char *argv[])
   double targetThickness;
   vector<double> beamEner;
   vector<double> beamFlux;
+  vector<double> fluxCDF;
   while (line!="#end")
   {
     if (line.substr(0,8)=="#isotope") 
@@ -78,12 +79,12 @@ int main(int argc, char *argv[])
     else if (line.substr(0,6)=="#width") 
     {
       getline(ifs, line);
-      targetWidth = (double)stof(line);
+      targetWidth = (double)stof(line.substr(0,line.find(" ")));
     }
     else if (line.substr(0,10)=="#thickness") 
     {
       getline(ifs, line);
-      targetThickness = (double)stof(line);
+      targetThickness = (double)stof(line.substr(0,line.find(" ")));
     }
     else if (line.substr(0,5)=="#flux")
     {
@@ -101,7 +102,7 @@ int main(int argc, char *argv[])
       }
       else
       {
-        if (line=="gauss")
+        if (line=="#gauss")
         {
           cout << "Generating Gaussian flux\n";
           getline(ifs,line);
@@ -116,8 +117,9 @@ int main(int argc, char *argv[])
             beamEner.push_back(ener);
             beamFlux.push_back(exp(-pow((mean-ener)/(sqrt(2.)*std_dev),2)));
           }
+          fluxCDF = eMath.fluxCDF(beamFlux);
         }
-        else if (line=="uniform")
+        else if (line=="#uniform")
         {
           cout << "Generating Uniform flux\n";
           getline(ifs,line);
@@ -126,11 +128,12 @@ int main(int argc, char *argv[])
           getline(ifs,line);
           for (int i=0;i<100;i++)
           {
-            beamEner.push_back((e_max-e_min)/100*i);
+            beamEner.push_back((e_max-e_min)/100*i + e_min);
             beamFlux.push_back(1.);
+            fluxCDF.push_back(1./(e_max-e_min)*((e_max-e_min)/100*i + e_min));
           }
         }
-        else if (line=="expo")
+        else if (line=="#expo")
         {
           cout << "Generating Exponential flux\n";
           getline(ifs,line);
@@ -145,7 +148,7 @@ int main(int argc, char *argv[])
             beamFlux.push_back(exp(decay_const*ener));
           }
         }
-        else if (line=="watt")
+        else if (line=="#watt")
         {
           cout << "Generating Watt Fission flux\n";
           getline(ifs,line);
@@ -160,10 +163,12 @@ int main(int argc, char *argv[])
             beamEner.push_back(ener);
             beamFlux.push_back(exp(-a*ener)*.5*(exp(sqrt(b*ener))-exp(-sqrt(b*ener))));
           }
+          fluxCDF = eMath.fluxCDF(beamFlux);
         }
         else 
         {
-          cout << "Invalid flux type. See document for correct input formatting";
+          cout << "Invalid flux type. See document for correct input formatting\n";
+          cout << "Exiting\n";
           return 0;
         }
       }
@@ -172,7 +177,10 @@ int main(int argc, char *argv[])
   }
   cout <<"width = "<< targetWidth << ", thickness = " <<targetThickness << "\n";
   /// convert energy-flux to CDF
-  vector<double> fluxCDF = eMath.fluxCDF(beamFlux);
+  for (int i=0;i<100;i++)
+  {
+    cout << beamEner[i] << ", " << fluxCDF[i]<<"\n";
+  }
   /// initialize output file (separate class?)
   ofstream ofs {outputFileName.c_str()};
   /// initialize data
@@ -199,6 +207,7 @@ int main(int argc, char *argv[])
   cout << "beginning main loop\n";
   map<string, double> inelLevels;
   int per = numParticles/10;
+  if (numParticles<=10) per = 1;
   for (int iPart =0; iPart < numParticles; iPart++)
   {
     if (iPart%per==0) cout << "working on history " << iPart << "\n";
@@ -207,12 +216,18 @@ int main(int argc, char *argv[])
     vector<double> init_pos_xy = initPosition(targetWidth, (&randNumGen));
     double init_pos_z = targetThickness*randNumGen.next();
     double beamEnergy =0.;
-    int hBin = distance(fluxCDF.begin(),std::upper_bound(fluxCDF.begin(), fluxCDF.end(), randNumGen.next()));
+    int hBin = distance(fluxCDF.begin(),std::lower_bound(fluxCDF.begin(), fluxCDF.end(), randNumGen.next()));
     double rand2 = randNumGen.next();
-    if (hBin==0) beamEnergy = beamEner[0]*rand2;
-    else beamEnergy = beamEner[hBin] + (beamEner[hBin+1]-beamEner[hBin])*rand2;
+    // if (hBin==0) beamEnergy = beamEner[0]*rand2;
+    // else beamEnergy = beamEner[hBin] + (beamEner[hBin+1]-beamEner[hBin])*rand2;
+    beamEnergy = beamEner[hBin+1] + (beamEner[hBin+2]-beamEner[hBin+1])*rand()/2e9;
+    // beamEnergy = 19.9*rand()/2e9  + .1;
     ofs << "["<<beamEnergy<<",";
     ofs << "("<<init_pos_xy[0]<<","<<init_pos_xy[1]<<","<<init_pos_z<<"),";
+    // if (beamEner[hBin+1]<4.1 && beamEner[hBin+1]>3.9)
+    // {
+    //   cout << beamEner[hBin+1] << ", " <<(beamEner[hBin+2]-beamEner[hBin+1])*randNumGen.next() << "\n";
+    // }
     // cout << "beamEnergy = " << beamEnergy<<"\n";
     /// determine reaction or lack thereof
     string rxnType = initData.pickReaction(beamEnergy*1e6);
@@ -226,6 +241,7 @@ int main(int argc, char *argv[])
     {
       numEl++;
       double mu_LAB = initData.pickElasticAngle(beamEnergy*1e6, randNumGen.next());
+      // double mu_LAB = 2.*randNumGen.next()-1;
       double new_energy = eMath.outgoingEnergy(beamEnergy,931,931*56,mu_LAB, 0);
       ofs << "{n,"<<new_energy<<","<<mu_LAB<<"}";
       // cout << beamEnergy << ": e_out = " << e_out << ", ang = " << mu_LAB << "\n";

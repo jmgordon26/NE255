@@ -1,0 +1,67 @@
+ 56FE    56MN B- DECAY                 1974TI01,2004MI10,1989CO0111NDS    201105
+ 56FE  H TYP=FUL$AUT=HUO JUNDE, HUO SU, YANG DONG$CIT=NDS 112, 1513 (2011)$     
+ 56FE2 H CUT=29-Oct-2009$                                                       
+ 56FE c  Sources produced generally by {+55}Mn(n,|g) E=thermal, production by   
+ 56FE2c  {+56}Fe(|a,3pn) (1996La20).                                            
+ 56FE c  {+56}Mn |b{+-} decay has been recommended as calibration standard for  
+ 56FE2c  E|g and I|g (1983LoZV).                                                
+ 56FE c  2004Mi10: measured I|g with HPGe detector systems.                     
+ 56FE c  1974Ti01: measured E|g, I|g with Ge(Li).                               
+ 56FE c  1974Ho25: measured E|g, I|g, |g|g(|q) with Ge(Li).                     
+ 56FE c  1973Ar15: measured E|g, I|g with Ge(Li).                               
+ 56FE c  1989Co01: oriented source, measured |g(|q).                            
+ 56FE c  2004BeZR: evaluation and recommendation of decay data                  
+ 56FE2c  for radionuclides.                                                     
+ 56FE c  Others: 1969Va07, 1968Sh07, 1967Ma03, 1967Ch20, 1967Au01, 1966Vo08,    
+ 56FE2c  1965Re14, 1964Bi11.                                                    
+ 56FE c  For |b|g-coin, see 1965Ar14.                                           
+ 56FE c  For |b(|q), see 1961Po04.                                              
+ 56FE c  For |b|g(|q), |b|g-CP, longitudinal polarization, see 1972Si30.        
+ 56FE c  Decay scheme is from 1974Ti01.                                         
+ 56FE cB IB        From intensity imbalance (1974Ti01).                         
+ 56FE cG E,RI      From 2004BeZR.                                               
+ 56FE cG M         From adopted |g radiations.                                  
+ 56FE cG MR        From |g|g(|q) (1974Ho25), except as noted.                   
+ 56FE cG MR(A)     From 1989Co01.                                               
+ 56FE cL E         From E|g and decay scheme using least-squares adjustment     
+ 56FE2cL procedure.                                                             
+ 56FE cL J(H)      Consistent with |g|g(|q) (1974Ho25) and log| {Ift}.          
+ 56MN  P 0.0         3+                2.5789 H  1              3695.64   21    
+ 56FE  N 0.9885    3           1         1.0                                    
+ 56FE cN NR        Based on no |b{+-} decay to the ground state and intensity   
+ 56FE2cN balance.                                                               
+ 56FE  L 0.0         0+                                                         
+ 56FE  L 846.7762  192+                                                         
+ 56FE  B             56.6    7             7.101  6                             
+ 56FES B EAV=1216.85                                                            
+ 56FE  G 846.7638  19100       E2                                               
+ 56FE  L 2085.064   34+                                                         
+ 56FE  B             0.057   6             9.06   5                             
+ 56FES B EAV=636.40 10                                                          
+ 56FE  G 1238.2736 220.040   4 E2                                               
+ 56FE  L 2657.547   42+                                                     H   
+ 56FE  B             27.5    4             5.622  7                             
+ 56FES B EAV=381.96 9                                                           
+ 56FE  G 1810.726  4 27.2    4 M1+E2     -0.18   1                          A   
+ 56FE cG MR        other: -0.19 {I3} (1974Ho25).                                
+ 56FE  G 2657.56   1 0.653   7                                                  
+ 56FE  L 2959.935   62+                                                     H   
+ 56FE  B             14.5    3             5.337  9                             
+ 56FES B EAV=255.23 9                                                           
+ 56FE  G 2113.092  6 14.4    3 M1+E2     +0.19   1                          A   
+ 56FE cG MR        other: +0.27 {I3} (1974Ho25).                                
+ 56FE  G 2959.92   1 0.310   5                                                  
+ 56FE  L 3122.908   44+                                                         
+ 56FE  B             0.040   4             7.50   5                             
+ 56FES B EAV=190.44 9                                                           
+ 56FE  G 1037.8333 240.040   5                                                  
+ 56FE  L 3369.91    42+                                                     H   
+ 56FE  B             1.20    3             5.173 11                             
+ 56FES B EAV=99.15 8                                                            
+ 56FE  G 2523.06   5 1.03    2 M1+E2     +0.25   15                             
+ 56FE  G 3369.81   4 0.17    1                                                  
+ 56FE  L 3445.279   53+                                                         
+ 56FE  B             0.020   2             6.57   5                             
+ 56FES B EAV=73.52 7                                                            
+ 56FE  G 2598.438  4 0.020   2 M1+E2     -0.27   2                              
+

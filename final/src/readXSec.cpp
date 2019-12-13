@@ -7,7 +7,7 @@ readXSec::readXSec()
 
 void readXSec::initPartialInel(string a_isotope)
 {
-  string fname = "../../FeXsec/"+a_isotope+"_InelF01";
+  string fname = "../FeXsec/"+a_isotope+"_InelF01";
   ifstream ifs {fname.c_str()};
   map<int, vector<vector<double>>> mt_map;
   // ifstream ifs {"~/ENDF-VIII.0/Inelastic/F01/26_56_Iron"};
@@ -122,7 +122,7 @@ void readXSec::initTotal(string a_isotope)
   string s;
   for (auto& pair : fnames)
   {
-    fname = "../../FeXsec/"+a_isotope+pair.second;
+    fname = "../FeXsec/"+a_isotope+pair.second;
     cout << "working on " << pair.second <<"\n";
     ifstream ifs {fname.c_str()};
     if (!ifs) {cout << "couldn't open files :("; return;}
@@ -228,7 +228,7 @@ string readXSec::pickInelLevel(double a_energy)
 
 void readXSec::readCapture(string a_isotope)
 {
-  string fname = "../../FeXsec/"+a_isotope+"_CapProd";
+  string fname = "../FeXsec/"+a_isotope+"_CapProd";
   ifstream ifs {fname.c_str()};
 
   string isotope="";
@@ -295,7 +295,7 @@ double readXSec::pickInelAngle(string a_level, double a_incidentEnergy, double a
 
 void readXSec::readElasticAngle(string a_isotope)
 {
-  string fname = "../../FeXsec/"+a_isotope+"_ElFS";
+  string fname = "../FeXsec/"+a_isotope+"_ElFS";
   ifstream ifs {fname.c_str()};
   string s;
   while (s.size()<20) getline(ifs, s);
@@ -311,6 +311,7 @@ void readXSec::readElasticAngle(string a_isotope)
         // cout << "\nNEW ENERGY "<<energy<<"\n";
         // coeffs->printData();
         m_elasticAng[energy] = (*coeffs);
+        m_elasticAngEnergy.push_back(energy);
         coeffs->m_coeffs.clear();
       }
       energy = (double)stof(s.substr(14,12));
@@ -326,6 +327,7 @@ void readXSec::readElasticAngle(string a_isotope)
     getline(ifs,s);
 
   }
+  cout <<"elastic angle size = "<< m_elasticAng.size() << "\n";
   ifs.close();
 }
 
@@ -334,43 +336,47 @@ double readXSec::pickElasticAngle(double a_incidentEnergy, double a_rand)
   // cout << a_level << "\n";
   if (a_incidentEnergy>1e6)
   {
-    auto iter = m_elasticAng.end();
-    iter = prev(iter,1);
-    double a_dist_cur = abs((*iter).first - a_incidentEnergy);
+    // auto iter = m_elasticAng.end();
+    // iter = prev(iter,1);
+    // double a_dist_cur = abs((*iter).first - a_incidentEnergy);
 
-    double a_dist_prev = abs((*iter).first - a_incidentEnergy);
-    // cout << "BeamEnergy = " << a_incidentEnergy << ", " <<(*iter).first<< "\n";
-    while (a_dist_prev>=a_dist_cur)
-    {
-      a_dist_prev = a_dist_cur;
-      iter = prev(iter,1);
-      a_dist_cur = abs((*iter).first - a_incidentEnergy);
-      // cout << (*iter).first << ", " << abs((*iter).first - a_incidentEnergy) << "\n";
-    }
-    iter = next(iter,1);
+    // double a_dist_prev = abs((*iter).first - a_incidentEnergy);
+    // // cout << "BeamEnergy = " << a_incidentEnergy << ", " <<(*iter).first<< "\n";
+    // while (a_dist_prev>=a_dist_cur)
+    // {
+    //   a_dist_prev = a_dist_cur;
+    //   iter = prev(iter,1);
+    //   a_dist_cur = abs((*iter).first - a_incidentEnergy);
+    //   // cout << (*iter).first << ", " << abs((*iter).first - a_incidentEnergy) << "\n";
+    // }
+    // iter = next(iter,1);
     // cout << "found energy = " << (*iter).first << "\n";
-    double mu = (*iter).second.sample(a_rand);
+    double energy = (*upper_bound(m_elasticAngEnergy.begin(),m_elasticAngEnergy.end(),a_incidentEnergy));
+    // double mu = (*iter).second.sample(a_rand);
+    double mu = m_elasticAng[energy].sample(a_rand);
     return mu;    
   }
   else
   {
-    auto iter = m_elasticAng.begin();
-    iter = next(iter,1);
-    double a_dist_cur = abs((*iter).first - a_incidentEnergy);
+    // auto iter = m_elasticAng.begin();
+    // iter = next(iter,1);
+    // double a_dist_cur = abs((*iter).first - a_incidentEnergy);
 
-    double a_dist_prev = abs((*iter).first - a_incidentEnergy);
-    // cout << "BeamEnergy = " << a_incidentEnergy << ", " <<(*iter).first<< "\n";
-    while (a_dist_prev>=a_dist_cur)
-    {
-      a_dist_prev = a_dist_cur;
-      iter = next(iter,1);
-      a_dist_cur = abs((*iter).first - a_incidentEnergy);
-      // cout << (*iter).first << ", " << abs((*iter).first - a_incidentEnergy) << "\n";
-    }
-    iter = prev(iter,1);
+    // double a_dist_prev = abs((*iter).first - a_incidentEnergy);
+    // // cout << "BeamEnergy = " << a_incidentEnergy << ", " <<(*iter).first<< "\n";
+    // while (a_dist_prev>=a_dist_cur)
+    // {
+    //   a_dist_prev = a_dist_cur;
+    //   iter = next(iter,1);
+    //   a_dist_cur = abs((*iter).first - a_incidentEnergy);
+    //   // cout << (*iter).first << ", " << abs((*iter).first - a_incidentEnergy) << "\n";
+    // }
+    // iter = prev(iter,1);
     // cout << "found energy = " << (*iter).first << "\n";
-    double mu = (*iter).second.sample(a_rand);
-    return mu;      
+    double energy = (*upper_bound(m_elasticAngEnergy.begin(),m_elasticAngEnergy.end(),a_incidentEnergy));
+    // double mu = (*iter).second.sample(a_rand);
+    double mu = m_elasticAng[energy].sample(a_rand);
+    return mu;     
   }
 
 }
@@ -382,7 +388,7 @@ vector<double> readXSec::readENSDF(string a_isotope, double a_rand)
   ifstream ifs {fname.c_str()};
   if (!ifs) 
   {
-    cout << fname<<"\n";
+    // cout << fname<<"\n";
     return {};
   }
   string line;

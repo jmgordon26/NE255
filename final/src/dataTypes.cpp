@@ -13,14 +13,17 @@
 #include<iostream>
 #include<iomanip>
 #include<math.h>
+#include<cmath>
 #include<fstream>
 #include<sstream>
 using namespace std;
 
 int binomialCoefficients(int l, int k) {
-   if (k == 0 || k == l)
-   return 1;
-   return binomialCoefficients(l - 1, k - 1) + binomialCoefficients(l - 1, k);
+   // if (k == 0 || k == l)
+   // return 1;
+   // return binomialCoefficients(l - 1, k - 1) + binomialCoefficients(l - 1, k);
+  return tgamma(l+1)/(tgamma(k+1)*tgamma(l-k+1));
+
 }
 double legPoly(int l, double x)
 {
@@ -58,7 +61,7 @@ void riplLevel::prepareLevel()
 }
 void RIPL::readRIPL(double BR_cutoff)
 {
-  ifstream fRIPL ("../fe56_ripl.txt");
+  ifstream fRIPL ("../FeXsec/fe56_ripl.txt");
   string line;
   vector<vector<double>> outp;
   int ensdfLevel = 1;

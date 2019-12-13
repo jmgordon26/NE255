@@ -48,4 +48,5 @@ private:
   map<string, xSec> m_isotopeProd;
   map<string, map<double,angDistLeg>> m_partialInelAng;
   map<double, angDistLeg> m_elasticAng;
+  vector<double> m_elasticAngEnergy;
 };
